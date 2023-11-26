@@ -22,21 +22,29 @@ class TriangleMetatile(Metatile):
         self.orientation = orientation
         self.cluster_nodes = []
         self.cluster_connections = []
+        self.graph = graph
         self.type = 'T'
 
     def to_cluster(self):
         pass
 
-   
-
     def to_tiles(self, tri_coord):
-        pass
+        a, b, c = tri_coord
 
+        # tiles from top right
+        
+        tiles = [
+            Hat(self.graph.side_len, (self.orientation + 2) % 3, 1, -1, (a, b, c))
+        ]
+        
+        return tiles
+    
 class TrigonalHexMetatile(Metatile):
     def __init__(self, graph, orientation):
 
         self.edge_connections = [[],[],[],[],[],[]]
         self.orientation = orientation
+        self.graph = graph
         self.type = 'H'
         pass
 
@@ -79,7 +87,32 @@ class TrigonalHexMetatile(Metatile):
         self.cluster_edge_tiles = [[a0, r0, a1], [a1], [a2, r1, a3], [a2], [a4, r2, a5], [a5]]
 
     def to_tiles(self, tri_coord):
-        pass #TODO
+
+        ori_shift_1 = [0,0,1]
+        ori_shift_2 = [-1,0,1]
+        ori_shift_3 = [-1,0,0]
+
+        a, b, c = tri_coord
+
+        # tiles from top right
+ 
+        tiles = [
+            Hat(self.graph.side_len, (self.orientation + 2) % 3, 1, -1, (a, b, c)),
+            Hat(self.graph.side_len, (self.orientation) % 3, 1, -1, (
+                a + ori_shift_1[self.orientation], 
+                b + ori_shift_1[(self.orientation + 2) % 3], 
+                c + ori_shift_1[(self.orientation + 1) % 3])),
+            Hat(self.graph.side_len, (self.orientation + 2) % 3, 1, -1, (
+                a + ori_shift_2[self.orientation], 
+                b + ori_shift_2[(self.orientation + 2) % 3], 
+                c + ori_shift_2[(self.orientation + 1) % 3])),
+            Hat(self.graph.side_len, (3 - self.orientation + 1) % 3, -1, 1, (
+                a + ori_shift_3[(self.orientation) % 3], 
+                b + ori_shift_3[(self.orientation + 2) % 3], 
+                c + ori_shift_3[(self.orientation + 1) % 3])),
+        ]
+        
+        return tiles
 
 class RhombusMetatile(Metatile):
     def __init__(self, graph, orientation):
@@ -87,13 +120,27 @@ class RhombusMetatile(Metatile):
         self.edge_connections = [[],[],[],[],[],[]]
         self.orientation = orientation
         self.type = 'R'
-        pass
+        self.graph = graph
 
     def to_cluster(self):
         pass
 
     def to_tiles(self, tri_coord):
-        pass
+        a, b, c = tri_coord
+
+        ori_shift = [0,1,0]
+
+        # tiles from top right
+        
+        tiles = [
+            Hat(self.graph.side_len, (self.orientation + 2) % 3, 1, -1, (a, b, c)), # focal tile = metatile focal tile
+            Hat(self.graph.side_len, (self.orientation + 1) % 3, 1, 1, (
+                    a + ori_shift[self.orientation],
+                    b + ori_shift[(self.orientation + 2) % 3],
+                    c + ori_shift[(self.orientation + 1) % 3] ))
+        ]
+        
+        return tiles
 
 class ArrowMetatile(Metatile):
     def __init__(self, graph, orientation):
@@ -121,17 +168,7 @@ class ArrowMetatile(Metatile):
                     b + ori_shift[(self.orientation + 2) % 3],
                     c + ori_shift[(self.orientation + 1) % 3] ))
         ]
-        """
-        tiles = [
-            Hat(self.graph.side_len, self.orientation, 1, -1, (a, b, c)), # focal tile = metatile focal tile
-            Hat(self.graph.side_len, 1, 1, 1, (a+1, b, c))
-        ]
-        
 
-        tiles = [
-            Hat(self.graph.side_len, self.orientation, 1, -1, (a, b, c)), # focal tile = metatile focal tile
-            Hat(self.graph.side_len, 2, 1, 1, (a, b+1, c))
-        ]"""
         return tiles
 
 class MetatileGraph:
@@ -148,15 +185,11 @@ if __name__ == "__main__":
 
     with open('header.txt') as header, open('footer.txt') as footer, open("tiles.svg", 'w') as out_svg:
         print(header.read(), file=out_svg)
+
+        metatiles = []
         
-        i =0
-        for ori in range(3):
-            
-            t = ArrowMetatile(g, ori)
-            tiles = t.to_tiles((0,10,-10))
-            for tile in tiles:
-                print(tile.to_svg_block(col[i], 'transparent'), file=out_svg)
-                i += 1
+        
+
         print(footer.read(), file=out_svg)
 
 
